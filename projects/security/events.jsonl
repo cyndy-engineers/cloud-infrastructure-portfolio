@@ -1,0 +1,7 @@
+{"timestamp":"2026-11-17T10:00:00Z","host":"lab-win01","event_id":4625,"user":"labuser","source_ip":"192.0.2.10","description":"Failed sign-in (synthetic)"}
+{"timestamp":"2026-11-17T10:01:00Z","host":"lab-win01","event_id":4625,"user":"labuser","source_ip":"192.0.2.10","description":"Failed sign-in (synthetic)"}
+{"timestamp":"2026-11-17T10:02:00Z","host":"lab-win01","event_id":4625,"user":"labuser","source_ip":"192.0.2.10","description":"Failed sign-in (synthetic)"}
+{"timestamp":"2026-11-17T10:03:00Z","host":"lab-win01","event_id":4625,"user":"labuser","source_ip":"192.0.2.10","description":"Failed sign-in (synthetic)"}
+{"timestamp":"2026-11-17T10:04:00Z","host":"lab-win01","event_id":4625,"user":"labuser","source_ip":"192.0.2.10","description":"Failed sign-in (synthetic)"}
+{"timestamp":"2026-11-17T10:06:00Z","host":"lab-win01","event_id":4624,"user":"labuser","source_ip":"192.0.2.10","description":"Successful sign-in (synthetic)"}
+{"timestamp":"2026-11-17T10:07:00Z","host":"lab-win02","event_id":4625,"user":"other","source_ip":"192.0.2.11","description":"Unrelated failure (synthetic)"}

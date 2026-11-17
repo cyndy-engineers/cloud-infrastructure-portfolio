@@ -1,0 +1,28 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+*.tfplan
+crash.log
+
+# Credentials and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.pfx
+*.key
+
+# Editor and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
