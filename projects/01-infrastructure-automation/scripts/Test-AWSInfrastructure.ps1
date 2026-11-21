@@ -529,5 +529,101 @@ Write-Host "[PASS] No unexpected security group rules found." -ForegroundColor G
 Write-Host "Security group least-privilege validation completed successfully." -ForegroundColor Green
 
 Write-Host "[PASS] Database security group has no outbound rules." -ForegroundColor Green
+# Validate EC2 web instance
+Write-Host "`nValidating EC2 web instance..." -ForegroundColor Cyan
+
+$EC2Response = Invoke-AWSCLI -Arguments @(
+    "ec2", "describe-instances",
+    "--filters", "Name=tag:Name,Values=portfolio-web-server",
+    "Name=instance-state-name,Values=running"
+)
+
+$Instances = @(
+    $EC2Response.Reservations |
+        ForEach-Object { $_.Instances }
+)
+
+if ($Instances.Count -ne 1) {
+    throw "Expected exactly one running portfolio web instance. Found $($Instances.Count)."
+}
+
+$WebInstance = $Instances[0]
+
+Write-Host "[PASS] EC2 instance running: $($WebInstance.InstanceId)" -ForegroundColor Green
+
+if ($WebInstance.InstanceType -ne "t3.micro") {
+    throw "Unexpected EC2 instance type: $($WebInstance.InstanceType)"
+}
+
+Write-Host "[PASS] EC2 instance type: t3.micro" -ForegroundColor Green
+# Validate EC2 subnet
+$ExpectedSubnetId = $Outputs.public_subnet_id.value
+
+if ($WebInstance.SubnetId -ne $ExpectedSubnetId) {
+    throw "EC2 subnet validation failed. Expected $ExpectedSubnetId, found $($WebInstance.SubnetId)."
+}
+
+Write-Host "[PASS] EC2 deployed in public subnet: $ExpectedSubnetId" -ForegroundColor Green
+
+# Validate EC2 security group
+$ExpectedSecurityGroupId = $Outputs.web_security_group_id.value
+
+$ActualSecurityGroupIds = @(
+    $WebInstance.SecurityGroups | ForEach-Object { $_.GroupId }
+)
+
+if (
+    $ActualSecurityGroupIds.Count -ne 1 -or
+    $ActualSecurityGroupIds[0] -ne $ExpectedSecurityGroupId
+) {
+    throw "EC2 security group validation failed. Expected only $ExpectedSecurityGroupId."
+}
+
+Write-Host "[PASS] EC2 attached to correct web security group: $ExpectedSecurityGroupId" -ForegroundColor Green
+
+# Validate public IPv4 address
+if ([string]::IsNullOrWhiteSpace($WebInstance.PublicIpAddress)) {
+    throw "EC2 public IP validation failed. No public IPv4 address assigned."
+}
+
+Write-Host "[PASS] EC2 public IPv4 address: $($WebInstance.PublicIpAddress)" -ForegroundColor Green
+
+# Validate IMDSv2 enforcement
+if ($WebInstance.MetadataOptions.HttpTokens -ne "required") {
+    throw "EC2 IMDSv2 validation failed. HTTP tokens are not required."
+}
+
+Write-Host "[PASS] EC2 IMDSv2 enforcement enabled." -ForegroundColor Green
+# Validate HTTP web server
+Write-Host "`nValidating HTTP web server..." -ForegroundColor Cyan
+
+$PublicIp = $WebInstance.PublicIpAddress
+
+if ([string]::IsNullOrWhiteSpace($PublicIp)) {
+    throw "HTTP validation failed: EC2 instance has no public IPv4 address."
+}
+
+$WebUrl = "http://$PublicIp"
+
+try {
+    $Response = Invoke-WebRequest -Uri $WebUrl -TimeoutSec 15 -ErrorAction Stop
+
+    if ($Response.StatusCode -eq 200) {
+        Write-Host "[PASS] HTTP endpoint reachable: $WebUrl" -ForegroundColor Green
+    }
+    else {
+        throw "Unexpected HTTP status code: $($Response.StatusCode)"
+    }
+
+    if ($Response.Content -match "Cloud Infrastructure Portfolio") {
+        Write-Host "[PASS] Expected website content found." -ForegroundColor Green
+    }
+    else {
+        throw "Expected website content not found."
+    }
+}
+catch {
+    throw "HTTP validation failed for ${WebUrl}: $($_.Exception.Message)"
+}
 
 Write-Host "`nInfrastructure validation completed successfully." -ForegroundColor Green
